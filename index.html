@@ -124,9 +124,10 @@
         }
 
         .card.matched .card-front {
-            background-color: #e8f8f5;
-            border-color: var(--success-color);
-        }
+    background-color: var(--bg-color); /* Stays dark! */
+    border-color: var(--success-color);
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.4); /* Adds a cool green glow instead */
+	}	
 
         .controls button {
             background-color: var(--primary-color);
