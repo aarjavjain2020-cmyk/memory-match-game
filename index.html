@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --primary-color: #3498db;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+            --card-back: #2980b9;
+            --success-color: #2ecc71;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            background: white;
+            padding: 10px 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            perspective: 1000px;
+        }
+
+        .card {
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease-in-out, box-shadow 0.3s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 25px rgba(50, 50, 50, 0.6);
+        }
+
+        @media (min-width: 480px) {
+            .card {
+                width: 100px;
+                height: 100px;
+            }
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card.flipped:hover, .card.matched:hover {
+            transform: translateY(-10px) rotateY(180deg);
+            box-shadow: 0 15px 25px rgba(50, 50, 50, 0.6);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            border-radius: 10px;
+        }
+
+        .card-front {
+            background-color: var(--card-bg);
+            transform: rotateY(180deg);
+            border: 2px solid var(--primary-color);
+        }
+
+        .card-back {
+            background-color: var(--card-back);
+            background-image: linear-gradient(135deg, var(--primary-color), var(--card-back));
+            border: 2px solid #1f6391;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .card-back::after {
+            content: '?';
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        .card.matched .card-front {
+            background-color: #e8f8f5;
+            border-color: var(--success-color);
+        }
+
+        .controls button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .controls button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .controls button:active {
+            transform: translateY(0);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideUp 0.4s ease-out;
+            max-width: 90%;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h2 {
+            color: var(--success-color);
+            font-size: 2.5rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .modal p {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+        }
+
+        .modal button {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .modal button:hover {
+            background-color: #27ae60;
+        }
+
+        /* Blackboard Scoreboard Styles */
+        .blackboard {
+            width: 90%;
+            max-width: 500px;
+            margin-top: 30px;
+            padding: 20px 30px;
+            background-color: #222;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('blackboard.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 10px solid #5c4033; /* wood frame */
+            border-radius: 5px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+            font-family: 'Caveat', cursive;
+            color: rgba(255, 255, 255, 0.85); /* rubbed white chalk */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-size: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .blackboard h2 {
+            margin: 0 0 10px 0;
+            text-align: center;
+            font-size: 2.2rem;
+            border-bottom: 2px dashed rgba(255,255,255,0.4);
+            padding-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .bb-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .bb-history {
+            margin-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .bb-history-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.3rem;
+            padding: 4px 0;
+            border-bottom: 1px dotted rgba(255,255,255,0.15);
+        }
+        
+        /* Custom scrollbar for history to fit blackboard theme */
+        .bb-history::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .bb-history::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+        
+        .bb-history::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.4);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Memory Match</h1>
+    
+    <div class="stats">
+        <div id="moves-display">Tries: 0</div>
+        <div id="failed-display">Failed: 0</div>
+        <div id="time-display">Time: 00:00</div>
+    </div>
+
+    <div class="board" id="board">
+        <!-- Cards will be generated here by JS -->
+    </div>
+
+    <div class="controls">
+        <button id="restart-btn">Play Game</button>
+    </div>
+
+    <!-- The Blackboard Scoreboard -->
+    <div class="blackboard">
+        <h2>Game History</h2>
+        <div class="bb-stats">
+            <div>Best Time: <span id="best-time">--:--</span></div>
+            <div>Worst Time: <span id="worst-time">--:--</span></div>
+        </div>
+        <div class="bb-history" id="bb-history-list">
+            <!-- Example static item for preview before JS wires it up -->
+            <div class="bb-history-item">
+                <span>Play #1</span>
+                <span>Time: 01:23</span>
+                <span>Failed: 4</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div class="modal" id="win-modal">
+        <div class="modal-content">
+            <h2>You won! 🎉</h2>
+            <p>You matched all pairs in <strong id="final-moves">0</strong> moves and <strong id="final-time">00:00</strong>.</p>
+            <button id="play-again-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐼', '🐯'];
+        const deck = [...emojis, ...emojis];
+        
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let timer = null;
+        let seconds = 0;
+        let isLocked = false;
+        let failedAttempts = 0;
+        let gameHistory = [];
+
+        const boardEl = document.getElementById('board');
+        const movesEl = document.getElementById('moves-display');
+        const failedEl = document.getElementById('failed-display');
+        const timeEl = document.getElementById('time-display');
+        const restartBtn = document.getElementById('restart-btn');
+        const winModal = document.getElementById('win-modal');
+        const finalMovesEl = document.getElementById('final-moves');
+        const finalTimeEl = document.getElementById('final-time');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const bestTimeEl = document.getElementById('best-time');
+        const worstTimeEl = document.getElementById('worst-time');
+        const bbHistoryList = document.getElementById('bb-history-list');
+
+        function initGame() {
+            // Reset state
+            clearInterval(timer);
+            timer = null;
+            seconds = 0;
+            moves = 0;
+            failedAttempts = 0;
+            matchedPairs = 0;
+            flippedCards = [];
+            isLocked = false;
+            winModal.style.display = 'none';
+            
+            updateStats();
+            
+            // Shuffle deck
+            cards = [...deck].sort(() => Math.random() - 0.5);
+            
+            // Render board
+            boardEl.innerHTML = '';
+            cards.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.index = index;
+                card.dataset.emoji = emoji;
+                
+                card.innerHTML = `
+                    <div class="card-face card-back"></div>
+                    <div class="card-face card-front">${emoji}</div>
+                `;
+                
+                card.addEventListener('click', onCardClick);
+                boardEl.appendChild(card);
+            });
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateStats() {
+            movesEl.textContent = `Tries: ${moves}`;
+            failedEl.textContent = `Failed: ${failedAttempts}`;
+            timeEl.textContent = `Time: ${formatTime(seconds)}`;
+        }
+
+        function startTimer() {
+            if (!timer) {
+                restartBtn.textContent = 'Restart Game';
+                timer = setInterval(() => {
+                    seconds++;
+                    timeEl.textContent = `Time: ${formatTime(seconds)}`;
+                }, 1000);
+            }
+        }
+
+        function onCardClick(e) {
+            if (isLocked) return;
+            const clickedCard = e.currentTarget;
+            
+            // Prevent clicking already flipped or matched cards
+            if (clickedCard.classList.contains('flipped') || clickedCard.classList.contains('matched')) {
+                return;
+            }
+
+            startTimer();
+
+            // Flip card
+            clickedCard.classList.add('flipped');
+            flippedCards.push(clickedCard);
+
+            if (flippedCards.length === 2) {
+                moves++;
+                updateStats();
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const match = card1.dataset.emoji === card2.dataset.emoji;
+
+            if (match) {
+                // It's a match!
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                flippedCards = [];
+                
+                if (matchedPairs === emojis.length) {
+                    endGame();
+                }
+            } else {
+                // Not a match, flip back after delay
+                failedAttempts++;
+                updateStats();
+                isLocked = true;
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                    isLocked = false;
+                }, 1000);
+            }
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            
+            // Save to history
+            gameHistory.push({
+                time: seconds,
+                failed: failedAttempts
+            });
+            
+            updateBlackboard();
+
+            setTimeout(() => {
+                finalMovesEl.textContent = moves;
+                finalTimeEl.textContent = formatTime(seconds);
+                winModal.style.display = 'flex';
+            }, 500);
+        }
+
+        function updateBlackboard() {
+            if (gameHistory.length === 0) {
+                bbHistoryList.innerHTML = '<div style="text-align:center; padding: 20px; font-size: 1.5rem;">Play a game to see your history!</div>';
+                return;
+            }
+
+            // Calculate Best and Worst times
+            let best = Math.min(...gameHistory.map(g => g.time));
+            let worst = Math.max(...gameHistory.map(g => g.time));
+            
+            bestTimeEl.textContent = formatTime(best);
+            worstTimeEl.textContent = formatTime(worst);
+
+            // Render History List
+            bbHistoryList.innerHTML = '';
+            
+            // Reverse so newest is on top, but keep accurate play numbers
+            let reversedHistory = gameHistory.map((game, index) => ({...game, playNum: index + 1})).reverse();
+
+            reversedHistory.forEach(game => {
+                const item = document.createElement('div');
+                item.classList.add('bb-history-item');
+                item.innerHTML = `
+                    <span>Play #${game.playNum}</span>
+                    <span>Time: ${formatTime(game.time)}</span>
+                    <span>Failed: ${game.failed}</span>
+                `;
+                bbHistoryList.appendChild(item);
+            });
+        }
+
+        restartBtn.addEventListener('click', initGame);
+        playAgainBtn.addEventListener('click', initGame);
+
+        // Start initial game
+        updateBlackboard();
+        initGame();
+    </script>
+</body>
+</html>
