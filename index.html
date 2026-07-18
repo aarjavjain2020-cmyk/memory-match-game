@@ -25,7 +25,7 @@
             flex-direction: column;
             align-items: center;
             margin: 0;
-            padding: 60px;
+            padding: 20px;
             min-height: 100vh;
         }
 
@@ -63,13 +63,13 @@
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.5s ease-in-out, box-shadow 0.3s ease-in-out;
-            box-shadow: 100 px 800px rgba(13,12,11,10.1);
+            box-shadow: 4 px 8px rgba(0,0,0,0.1);
             border-radius: 10px;
         }
 
         .card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 105px 215px rgba(50, 50, 50, 0.6);
+            box-shadow: 0 15px 25px rgba(50, 50, 50, 0.6);
         }
 
         @media (min-width: 480px) {
@@ -109,7 +109,7 @@
         .card-back {
             background-color: var(--card-back);
             background-image: linear-gradient(135deg, var(--primary-color), var(--card-back));
-            border: 20px solid #1f6391;
+            border: 2px solid #1f6391;
             display: flex;
             justify-content: center;
             align-items: center;
